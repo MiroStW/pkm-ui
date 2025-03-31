@@ -1,5 +1,5 @@
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -29,7 +29,27 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    DiscordProvider,
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        username: { label: "Username", type: "text", placeholder: "jsmith" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        // For testing purposes, accept specific hardcoded credentials
+        if (
+          credentials?.username === "test" &&
+          credentials?.password === "password"
+        ) {
+          return {
+            id: "1",
+            name: "Test User",
+            email: "test@example.com",
+          };
+        }
+        return null;
+      },
+    }),
     /**
      * ...add more providers here.
      *
