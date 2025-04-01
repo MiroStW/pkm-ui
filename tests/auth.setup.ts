@@ -16,14 +16,15 @@ if (!fs.existsSync(authDir)) {
 }
 
 // Setup authentication before tests
-setup("authenticate", async ({ page }) => {
-  console.log("Starting authentication setup");
+setup("authenticate", async ({ page, context }) => {
+  console.log("🔐 [AUTH SETUP] ==========================================");
+  console.log("🔐 [AUTH SETUP] Starting authentication setup");
 
   try {
     // Navigate to the login page
     await page.goto("http://localhost:3000/auth/signin");
 
-    console.log("On signin page, filling credentials");
+    console.log("🔐 [AUTH SETUP] On signin page, filling credentials");
 
     // Wait for the form to be ready
     await page.waitForSelector('input[type="email"]', { timeout: 5000 });
@@ -33,59 +34,54 @@ setup("authenticate", async ({ page }) => {
     await page.fill('input[type="email"]', TEST_EMAIL);
     await page.fill('input[type="password"]', TEST_PASSWORD);
 
-    console.log("Credentials filled, submitting form");
+    console.log("🔐 [AUTH SETUP] Credentials filled, submitting form");
+
+    // Start listening for response to the signin request
+    const responsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes("/auth/signin") && response.status() === 303,
+    );
 
     // Submit the form
     await page.click('button[type="submit"]');
 
-    // Wait a bit for any redirects
-    await page.waitForTimeout(2000);
+    // Wait for successful response
+    console.log("🔐 [AUTH SETUP] Waiting for successful login response...");
+    await responsePromise;
 
-    // Force storage to contain test auth data even if the actual login failed
-    console.log("Setting up test auth storage state");
+    // Wait a bit to ensure all cookies are set
+    await page.waitForTimeout(1000);
 
-    // Create a minimal storage state for tests
-    const storageState = {
-      cookies: [
-        {
-          name: "next-auth.session-token",
-          value: "test-session-token",
-          domain: "localhost",
-          path: "/",
-          expires: Math.floor(Date.now() / 1000) + 86400, // 1 day from now in seconds
-          httpOnly: true,
-          secure: false,
-          sameSite: "Lax",
-        },
-      ],
-      origins: [],
-    };
+    // Verify we're actually logged in by checking the protected page
+    console.log("🔐 [AUTH SETUP] Verifying authentication...");
+    await page.goto("http://localhost:3000/protected");
 
-    // Write the auth state directly
-    fs.writeFileSync(authFile, JSON.stringify(storageState, null, 2));
+    // Wait for some content that indicates we're logged in
+    await page.waitForSelector("text=Protected Page", { timeout: 5000 });
 
-    console.log("Authentication setup complete");
+    // Store the authentication state
+    console.log("🔐 [AUTH SETUP] Storing authentication state");
+    const storage = await context.storageState();
+
+    // Verify we have the session cookie before saving
+    if (
+      !storage.cookies.some(
+        (cookie) => cookie.name === "next-auth.session-token",
+      )
+    ) {
+      throw new Error("Session cookie not found in storage state");
+    }
+
+    fs.writeFileSync(authFile, JSON.stringify(storage, null, 2));
+    console.log(
+      "🔐 [AUTH SETUP] Authentication state saved with cookies:",
+      storage.cookies.length,
+    );
+
+    console.log("🔐 [AUTH SETUP] Authentication setup complete");
+    console.log("🔐 [AUTH SETUP] ==========================================");
   } catch (error) {
-    console.error("Auth setup error:", error);
-
-    // Create a fallback auth state to ensure tests can continue
-    const fallbackState = {
-      cookies: [
-        {
-          name: "next-auth.session-token",
-          value: "fallback-test-token",
-          domain: "localhost",
-          path: "/",
-          expires: Math.floor(Date.now() / 1000) + 86400, // 1 day from now in seconds
-          httpOnly: true,
-          secure: false,
-          sameSite: "Lax",
-        },
-      ],
-      origins: [],
-    };
-
-    fs.writeFileSync(authFile, JSON.stringify(fallbackState, null, 2));
-    console.log("Created fallback auth state due to error");
+    console.error("🔐 [AUTH SETUP] ERROR:", error);
+    throw error; // Let the test fail if we can't authenticate
   }
 });

@@ -19,15 +19,13 @@ test.describe("Authenticated Tests", () => {
     // Should NOT be redirected to login - check URL doesn't contain signin
     expect(page.url()).not.toContain("/auth/signin");
 
-    // Verify we can see the protected content
+    // Verify we can see the protected content - check for the heading
     await expect(
-      page.locator("h1, h2, .heading, .page-title").first(),
+      page.getByRole("heading", { name: "Protected Page" }),
     ).toBeVisible();
 
-    // Check for welcome text with flexible matching
-    await expect(
-      page.getByText(/Protected|Welcome|Profile|Dashboard|Hello/i),
-    ).toBeVisible();
+    // Check for welcome text
+    await expect(page.getByText(/Welcome, Test User/)).toBeVisible();
   });
 
   // Test: Can sign out successfully

@@ -129,6 +129,7 @@ export default defineConfig({
       SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
       SUPABASE_ANON_KEY: "test-anon-key",
       USE_MOCK_SUPABASE: "true",
+      AUTH_SECRET: "test-auth-secret-key-for-jwt-signing",
     },
   },
 });

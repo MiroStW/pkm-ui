@@ -1,11 +1,21 @@
 {
   "cookies": [
     {
-      "name": "next-auth.session-token",
-      "value": "test-session-token",
+      "name": "authjs.callback-url",
+      "value": "http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fsignin",
       "domain": "localhost",
       "path": "/",
-      "expires": 1743543141,
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "next-auth.session-token",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoicFpKekJOSGc2S3JIaTZ5S3pwNjRRSTdpUjBNUGMzOFo5VzZPNTZWR3hocDgtYl9PNXgwajFNZU5lX29XSWt6cG4zeEdKMUM3YTRLRzRGWDh0RWp3OHcifQ..26Sfs5lRbx6UtMYT_6jDUQ.4UfMaylBIy9dghZaf4_ZPPtcfnsc4emuv7OAzKS90kFjnqzZz14WlLI34E9btVYBPgALppGpsNO63SQJ9OXQYYJuAtP9odgAAzLwucINDjnl_CMWsl8p_eBP4_Cl35VqnDo8HFFXIQRsYtQMsfoK1-6qQLDnRHS_QFaFrzPoyOvjTpXyLby01gSb0bFnetDTMCSTMjYe9_fvz-yE-h-fhwBPjUvBSlwwjUv4wEFOJ78.LIuy-wIIsMGrAaG1HEs4aOYeuRDaZGwnxpzxwSs91SM",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1746087449.42428,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"
