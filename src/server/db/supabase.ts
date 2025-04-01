@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "./types";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
 // Get Supabase URL and service role key from env vars
 const supabaseUrl =
@@ -16,55 +16,68 @@ const isTestMode =
 // Log for debugging
 console.log("isTestMode", isTestMode);
 
-// Simple in-memory mock storage
-const mockStorage: Record<string, Record<string, any>> = {
-  chat_sessions: {},
-  chat_messages: {},
-};
+// Type definitions to help with mocking
+interface MockSelectResponse<T> {
+  data: T | null;
+  error: PostgrestError | null;
+}
 
 // Create a simple mock Supabase client
 function createMockClient() {
+  // Use type assertion to ensure compatibility
   return {
     from: (table: string) => {
       return {
-        select: () => ({
-          single: () => ({ data: null, error: null }),
-          eq: () => ({
-            single: () => ({ data: null, error: null }),
-            order: () => ({ data: [], error: null }),
+        select: <T = unknown>() => ({
+          single: () => ({ data: null, error: null }) as MockSelectResponse<T>,
+          eq: (_column: string, _value: string) => ({
+            single: () =>
+              ({ data: null, error: null }) as MockSelectResponse<T>,
+            order: () => ({ data: [], error: null }) as MockSelectResponse<T[]>,
+            eq: (_nestedColumn: string, _nestedValue: string) => ({
+              select: <U = unknown>() => ({
+                single: () =>
+                  ({ data: null, error: null }) as MockSelectResponse<U>,
+              }),
+            }),
           }),
         }),
-        insert: (data: Record<string, unknown>) => ({
-          select: () => ({
+        insert: (data: unknown) => ({
+          select: <T = unknown>() => ({
             single: () => {
               // Special case for user registration - return mock user data for test
-              if (table === "users" && typeof data.email === "string") {
+              if (
+                table === "users" &&
+                typeof (data as Record<string, unknown>).email === "string"
+              ) {
                 return {
-                  data: { id: "test-user-id-" + Date.now() },
+                  data: { id: "test-user-id-" + Date.now() } as T,
                   error: null,
                 };
               }
-              return { data: null, error: null };
+              return { data: null, error: null } as MockSelectResponse<T>;
             },
           }),
         }),
-        update: () => ({
-          eq: () => ({
-            eq: () => ({
-              select: () => ({
-                single: () => ({ data: null, error: null }),
+        update: (_data: unknown) => ({
+          eq: (_column: string, _value: string) => ({
+            eq: (_nestedColumn: string, _nestedValue: string) => ({
+              select: <T = unknown>() => ({
+                single: () =>
+                  ({ data: null, error: null }) as MockSelectResponse<T>,
               }),
             }),
           }),
         }),
         delete: () => ({
-          eq: () => ({
-            eq: () => ({ data: null, error: null }),
+          eq: (_column: string, _value: string) => ({
+            eq: (_nestedColumn: string, _nestedValue: string) =>
+              ({ data: null, error: null }) as MockSelectResponse<null>,
           }),
         }),
       };
     },
-  };
+  } as unknown as SupabaseClient;
 }
 
 // Create a mock Supabase client for tests or use the real one for production

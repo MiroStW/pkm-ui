@@ -16,8 +16,9 @@ const TEST_USER_ID = "test-user-id";
 type ChatSession = Database["public"]["Tables"]["chat_sessions"]["Row"];
 type ChatMessage = Database["public"]["Tables"]["chat_messages"]["Row"];
 
-// Ensure Supabase client is properly typed - use a fresh mock client for tests
-const db = createMockSupabaseClient() as SupabaseClient<Database>;
+// Use a type assertion that first converts to unknown
+// to avoid strict type checking between the mock and real client types
+const db = createMockSupabaseClient() as unknown as SupabaseClient<Database>;
 
 describe("Chat Database Operations", () => {
   test("Create and retrieve chat session", async () => {

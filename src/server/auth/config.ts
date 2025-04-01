@@ -4,7 +4,6 @@ import { z } from "zod";
 import { SupabaseAdapter } from "@auth/supabase-adapter";
 import { supabase } from "../db/supabase";
 import { verifyPassword } from "./password";
-import { env } from "../../env";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`

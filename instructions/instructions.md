@@ -36,7 +36,7 @@ This document outlines a step-by-step implementation plan for building the PKM C
 
 ### Step 4: Install Vercel AI SDK
 
-- Install AI SDK and provider libraries (`npm install ai @ai-sdk/react @ai-sdk/openai`)
+- Install AI SDK and provider libraries (`bun install ai @ai-sdk/react @ai-sdk/openai`)
 - Configure OpenAI API key in `.env.local`
 - Create initial AI provider setup
 - Set up embedding utilities in `lib/ai/embedding.ts`

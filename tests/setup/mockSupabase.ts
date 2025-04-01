@@ -3,11 +3,35 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../src/server/db/types";
+import type { PostgrestError } from "@supabase/supabase-js";
+
+// Type definitions for mock data
+interface MockChatSession {
+  id: string;
+  user_id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  is_favorite: boolean;
+  metadata: Record<string, unknown>;
+}
+
+interface MockChatMessage {
+  id: string;
+  session_id: string;
+  role: string;
+  content: string;
+  created_at: string;
+  metadata: Record<string, unknown>;
+}
+
+type MockData = MockChatSession | MockChatMessage;
 
 // In-memory storage for tests
-const mockStorage = {
+const mockStorage: {
+  chat_sessions: Record<string, MockChatSession>;
+  chat_messages: Record<string, MockChatMessage>;
+} = {
   chat_sessions: {},
   chat_messages: {},
 };
@@ -29,15 +53,76 @@ export function setupTestEnv(): void {
   console.log("Test environment set up with USE_MOCK_SUPABASE=true");
 }
 
+// Type definitions to help with mocking
+interface MockSelectResponse<T> {
+  data: T | null;
+  error: PostgrestError | null;
+}
+
+// Type for our mock Supabase client to ensure compatibility with tests
+type MockSupabaseClient = {
+  from: (table: string) => {
+    select: <T = unknown>() => {
+      single: () => MockSelectResponse<T>;
+      eq: (
+        column: string,
+        value: string,
+      ) => {
+        single: () => MockSelectResponse<T>;
+        order: (
+          column: string,
+          options: { ascending: boolean },
+        ) => MockSelectResponse<T[]>;
+        eq: (
+          column: string,
+          value: string,
+        ) => {
+          select: <U = unknown>() => {
+            single: () => MockSelectResponse<U>;
+          };
+        };
+      };
+    };
+    insert: (data: unknown) => {
+      select: <T = unknown>() => {
+        single: () => MockSelectResponse<T>;
+      };
+    };
+    update: (data: unknown) => {
+      eq: (
+        column: string,
+        value: string,
+      ) => {
+        eq: (
+          column: string,
+          value: string,
+        ) => {
+          select: <T = unknown>() => {
+            single: () => MockSelectResponse<T>;
+          };
+        };
+      };
+    };
+    delete: () => {
+      eq: (
+        column: string,
+        value: string,
+      ) => {
+        eq: (column: string, value: string) => MockSelectResponse<null>;
+      };
+    };
+  };
+};
+
 /**
  * Creates a mock Supabase client for testing purposes
  */
-export function createMockSupabaseClient(): Partial<SupabaseClient<Database>> {
-  function cloneData(data: any) {
-    return JSON.parse(JSON.stringify(data));
+export function createMockSupabaseClient(): MockSupabaseClient {
+  function cloneData<T>(data: T): T {
+    return JSON.parse(JSON.stringify(data)) as T;
   }
 
-  function createErrorObject(message: string) {
+  function createErrorObject(message: string): PostgrestError {
     return {
       message,
       details: "",
@@ -47,10 +132,13 @@ export function createMockSupabaseClient(): Partial<SupabaseClient<Database>> {
     };
   }
 
-  return {
-    from: (table: string) => {
-      let lastData = null;
+  let lastData: MockData | null = null;
 
+  // This is a simplified mock that doesn't implement all PostgrestQueryBuilder methods
+  // but provides the methods we need for our tests
+  const client = {
+    from: (_table: string) => {
+      const table = _table;
       return {
         select: () => ({
           single: () => {
@@ -65,7 +153,8 @@ export function createMockSupabaseClient(): Partial<SupabaseClient<Database>> {
             single: () => {
               if (table === "chat_sessions") {
                 const session = Object.values(mockStorage.chat_sessions).find(
-                  (s: any) => s[column] === value,
+                  (s: MockChatSession) =>
+                    s[column as keyof MockChatSession] === value,
                 );
                 return {
                   data: session ? cloneData(session) : null,
@@ -75,7 +164,10 @@ export function createMockSupabaseClient(): Partial<SupabaseClient<Database>> {
               if (table === "chat_messages") {
                 const messages = Object.values(
                   mockStorage.chat_messages,
-                ).filter((m: any) => m[column] === value);
+                ).filter(
+                  (m: MockChatMessage) =>
+                    m[column as keyof MockChatMessage] === value,
+                );
 
                 // Don't sort for now, just return all messages that match the filter
                 return {
@@ -88,17 +180,39 @@ export function createMockSupabaseClient(): Partial<SupabaseClient<Database>> {
             order: () => {
               return { data: [], error: null };
             },
+            eq: (nestedColumn: string, nestedValue: string) => ({
+              select: () => ({
+                single: () => {
+                  // Double eq filtering
+                  if (table === "chat_sessions") {
+                    const sessions = Object.values(mockStorage.chat_sessions);
+                    const session = sessions.find(
+                      (s) =>
+                        s[column as keyof MockChatSession] === value &&
+                        s[nestedColumn as keyof MockChatSession] ===
+                          nestedValue,
+                    );
+                    return {
+                      data: session ? cloneData(session) : null,
+                      error: null,
+                    };
+                  }
+                  return { data: null, error: null };
+                },
+              }),
+            }),
           }),
         }),
-        insert: (data: any) => {
-          const id = data.id || uuidv4();
+        insert: (data: unknown) => {
+          const id = (data as { id?: string }).id ?? uuidv4();
           const now = new Date().toISOString();
 
           if (table === "chat_sessions") {
-            const newSession = {
+            const sessionData = data as Partial<MockChatSession>;
+            const newSession: MockChatSession = {
               id,
-              user_id: data.user_id || "",
-              title: data.title || "",
+              user_id: sessionData.user_id ?? "",
+              title: sessionData.title ?? "",
               created_at: now,
               updated_at: now,
               is_favorite: false,
@@ -109,11 +223,12 @@ export function createMockSupabaseClient(): Partial<SupabaseClient<Database>> {
           }
 
           if (table === "chat_messages") {
-            const newMessage = {
+            const messageData = data as Partial<MockChatMessage>;
+            const newMessage: MockChatMessage = {
               id,
-              session_id: data.session_id || "",
-              role: data.role || "user",
-              content: data.content || "",
+              session_id: messageData.session_id ?? "",
+              role: messageData.role ?? "user",
+              content: messageData.content ?? "",
               created_at: now,
               metadata: {},
             };
@@ -122,18 +237,18 @@ export function createMockSupabaseClient(): Partial<SupabaseClient<Database>> {
           }
 
           return {
-            select: () => ({
+            select: <T = unknown>() => ({
               single: () => ({
-                data: lastData ? cloneData(lastData) : null,
+                data: lastData ? (cloneData(lastData) as T) : null,
                 error: null,
               }),
             }),
           };
         },
-        update: (data: any) => ({
+        update: (data: unknown) => ({
           eq: (column: string, value: string) => ({
             eq: (nestedColumn: string, nestedValue: string) => ({
-              select: () => ({
+              select: <T = unknown>() => ({
                 single: () => {
                   if (
                     table === "chat_sessions" &&
@@ -143,9 +258,9 @@ export function createMockSupabaseClient(): Partial<SupabaseClient<Database>> {
                     const session = mockStorage.chat_sessions[value];
                     if (session && session.user_id === nestedValue) {
                       const now = new Date().toISOString();
-                      const updatedSession = {
+                      const updatedSession: MockChatSession = {
                         ...session,
-                        ...data,
+                        ...(data as Partial<MockChatSession>),
                         updated_at: now,
                         id: value,
                         user_id: nestedValue,
@@ -153,7 +268,7 @@ export function createMockSupabaseClient(): Partial<SupabaseClient<Database>> {
                       mockStorage.chat_sessions[value] = updatedSession;
                       lastData = updatedSession;
                       return {
-                        data: cloneData(updatedSession),
+                        data: cloneData(updatedSession) as T,
                         error: null,
                       };
                     }
@@ -181,7 +296,7 @@ export function createMockSupabaseClient(): Partial<SupabaseClient<Database>> {
                   delete mockStorage.chat_sessions[value];
                   // Cascade delete messages
                   Object.entries(mockStorage.chat_messages).forEach(
-                    ([msgId, msg]: [string, any]) => {
+                    ([msgId, msg]: [string, MockChatMessage]) => {
                       if (msg.session_id === value) {
                         delete mockStorage.chat_messages[msgId];
                       }
@@ -199,4 +314,7 @@ export function createMockSupabaseClient(): Partial<SupabaseClient<Database>> {
       };
     },
   };
+
+  // Return as MockSupabaseClient
+  return client as MockSupabaseClient;
 }
