@@ -132,7 +132,7 @@ export default function RegisterPage() {
         });
       }
     }
-  }, []);
+  }, [validationErrors]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

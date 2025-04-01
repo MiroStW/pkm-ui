@@ -5,6 +5,7 @@ import { authenticate } from "~/app/auth/actions";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
+import { startTransition } from "react";
 import Link from "next/link";
 
 // Separate component for the submit button to use useFormStatus
@@ -134,8 +135,10 @@ export default function SignInPage() {
     // Clear form error
     setFormError(null);
 
-    // Continue with the form submission
-    dispatch(formData);
+    // Wrap dispatch in startTransition
+    startTransition(() => {
+      dispatch(formData);
+    });
   };
 
   return (
