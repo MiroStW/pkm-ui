@@ -1,10 +1,12 @@
 import { test, expect } from "@playwright/test";
+import path from "path";
 
 // Define constants for URLs and credentials
 const BASE_URL = "http://localhost:3000";
 const SIGNIN_URL = `${BASE_URL}/auth/signin`;
 const REGISTER_URL = `${BASE_URL}/auth/register`;
 const PROTECTED_URL = `${BASE_URL}/protected`;
+const SCREENSHOTS_DIR = path.join("tests", "screenshots");
 
 // Test credentials
 const TEST_EMAIL = "test@example.com";
@@ -94,7 +96,9 @@ test.describe("Authentication - Unauthenticated", () => {
     } catch (error) {
       console.log("Error message not found in expected format:", error);
       // Take a screenshot to debug
-      await page.screenshot({ path: "error-credentials-test.png" });
+      await page.screenshot({
+        path: path.join(SCREENSHOTS_DIR, "error-credentials-test.png"),
+      });
     }
   });
 
@@ -132,9 +136,204 @@ test.describe("Authentication - Unauthenticated", () => {
     await expect(page.locator('button[type="submit"]')).toBeVisible();
   });
 
-  // Skip the more complex interaction tests for now
-  test.skip("can register a new user", async () => {
-    // This test will be skipped until we fix all form interactions
+  // Test: Can register a new user
+  test("can register a new user", async ({ page }) => {
+    // Navigate to register page
+    await page.goto(REGISTER_URL);
+
+    // Generate unique email to avoid conflicts
+    const timestamp = Date.now();
+    const testEmail = `test.user.${timestamp}@example.com`;
+    const testPassword = "SecurePass123!";
+
+    // Fill in registration form
+    await page.fill('input[type="email"]', testEmail);
+    await page.fill(
+      '#password, input[name="password"], input[placeholder="Password"]',
+      testPassword,
+    );
+    await page.fill(
+      '#confirmPassword, input[name="confirmPassword"], input[placeholder*="confirm" i]',
+      testPassword,
+    );
+
+    // Optional fields that might exist
+    try {
+      const nameInput = await page.waitForSelector(
+        'input[name="name"], input[placeholder*="name" i], #name',
+        { timeout: 2000 },
+      );
+      if (nameInput) {
+        await nameInput.type("Test User");
+      }
+    } catch (error) {
+      // Name field is optional, continue if not found
+      console.log("Name field not found, continuing with registration");
+    }
+
+    // Submit the form and wait for response
+    await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/auth/register") &&
+          (response.status() === 200 || response.status() === 201),
+      ),
+      page.click('button[type="submit"]'),
+    ]);
+
+    // Wait for redirect or success message
+    try {
+      await Promise.race([
+        page.waitForURL(/.*\/auth\/signin.*registered=true.*/, {
+          timeout: 5000,
+        }),
+        page.waitForSelector('[role="alert"]:has-text("success")', {
+          timeout: 5000,
+        }),
+        page.waitForSelector("text=/registered|created|success/i", {
+          timeout: 5000,
+        }),
+      ]);
+    } catch (error) {
+      console.log(
+        "Registration success indicator not found immediately, proceeding with signin check",
+      );
+    }
+
+    // Check if we're on the signin page
+    if (page.url().includes("/signin")) {
+      // Wait for the form to be ready
+      await page.waitForSelector('input[type="email"]');
+      await page.waitForSelector('input[type="password"]');
+
+      // Fill in the credentials
+      await page.fill('input[type="email"]', testEmail);
+      await page.fill('input[type="password"]', testPassword);
+
+      // Submit and wait for response
+      await Promise.all([
+        page.waitForResponse(
+          (response) =>
+            response.url().includes("/auth/signin") &&
+            (response.status() === 200 || response.status() === 303),
+        ),
+        page.click('button[type="submit"]'),
+      ]);
+    }
+  });
+
+  // Test: Form validation for registration
+  test("validates registration form inputs", async ({ page }) => {
+    await page.goto(REGISTER_URL);
+
+    // Test email validation - try submitting empty email first
+    await page.fill('input[type="email"]', "");
+    await page.click('button[type="submit"]');
+
+    // Look for any validation message about email
+    const emailErrorSelectors = [
+      "text=/email.*required|invalid.*email|valid.*email/i",
+      '[role="alert"]:has-text("email")',
+      '.error-message:has-text("email")',
+      'input[type="email"]:invalid',
+      '[aria-invalid="true"]',
+      // HTML5 validation message
+      'input[type="email"]:invalid + span',
+      'input[type="email"][aria-invalid="true"]',
+    ];
+
+    let emailErrorFound = false;
+    for (const selector of emailErrorSelectors) {
+      try {
+        const element = await page.waitForSelector(selector, { timeout: 1000 });
+        if (element) {
+          emailErrorFound = true;
+          break;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    expect(emailErrorFound, "Email validation error should be visible").toBe(
+      true,
+    );
+
+    // Test password requirements
+    await page.fill('input[type="email"]', "valid@example.com");
+    await page.fill(
+      '#password, input[name="password"], input[placeholder="Password"]',
+      "short",
+    );
+    await page.click('button[type="submit"]');
+
+    // Check for password validation with multiple possible indicators
+    const passwordErrorSelectors = [
+      "text=/password.*length|password.*short|minimum/i",
+      '[role="alert"]:has-text("password")',
+      '.error-message:has-text("password")',
+      'input[type="password"]:invalid',
+      '[aria-invalid="true"]',
+      // HTML5 validation message
+      'input[type="password"]:invalid + span',
+      'input[type="password"][aria-invalid="true"]',
+    ];
+
+    let passwordErrorFound = false;
+    for (const selector of passwordErrorSelectors) {
+      try {
+        const element = await page.waitForSelector(selector, { timeout: 1000 });
+        if (element) {
+          passwordErrorFound = true;
+          break;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    expect(
+      passwordErrorFound,
+      "Password validation error should be visible",
+    ).toBe(true);
+
+    // Test password confirmation match
+    const validPassword = "ValidPass123!";
+    await page.fill(
+      '#password, input[name="password"], input[placeholder="Password"]',
+      validPassword,
+    );
+    await page.fill(
+      '#confirmPassword, input[name="confirmPassword"], input[placeholder*="confirm" i]',
+      validPassword + "different",
+    );
+    await page.click('button[type="submit"]');
+
+    // Check for password match error with multiple possible indicators
+    const matchErrorSelectors = [
+      "text=/password.*match|match.*password|not.*match/i",
+      '[role="alert"]:has-text("match")',
+      '.error-message:has-text("match")',
+      'input[type="password"]:invalid',
+      '[aria-invalid="true"]',
+      // HTML5 validation message
+      'input[type="password"]:invalid + span',
+      'input[type="password"][aria-invalid="true"]',
+    ];
+
+    let matchErrorFound = false;
+    for (const selector of matchErrorSelectors) {
+      try {
+        const element = await page.waitForSelector(selector, { timeout: 1000 });
+        if (element) {
+          matchErrorFound = true;
+          break;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    expect(matchErrorFound, "Password match error should be visible").toBe(
+      true,
+    );
   });
 
   // Test: Protected routes redirect to login
