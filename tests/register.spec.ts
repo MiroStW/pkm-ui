@@ -1,13 +1,11 @@
 import { test, expect } from "@playwright/test";
 
 // Define constants for URLs and credentials
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "http://localhost:3001";
 const REGISTER_URL = `${BASE_URL}/auth/register`;
 
 // Test user info
 const NEW_USER_EMAIL = "new_user@example.com";
-const NEW_USER_PASSWORD = "Password123!";
-const NEW_USER_NAME = "New User";
 
 // Test suite for registration functionality
 test.describe("User Registration", () => {
@@ -47,13 +45,14 @@ test.describe("User Registration", () => {
   test("can register a new user with valid data", async ({ page }) => {
     await page.goto(REGISTER_URL);
 
-    // Generate unique email
+    // Generate unique email - use a truly unique timestamp and random string
     const timestamp = Date.now();
-    const email = `new.user.${timestamp}@example.com`;
+    const random = Math.random().toString(36).substring(2, 8);
+    const email = `test.user.${timestamp}.${random}@example.com`;
     const password = "StrongP@ssw0rd123";
     const name = "John Doe";
 
-    // Fill in all fields including optional ones
+    // Fill in all required fields
     await page.fill('input[type="email"]', email);
     await page.fill(
       '#password, input[name="password"], input[placeholder="Password"]',
@@ -71,34 +70,63 @@ test.describe("User Registration", () => {
         name,
       );
     } catch (e) {
-      console.log("Name field not found, continuing without it");
+      console.log("Name field not found, continuing without it: ", e);
     }
 
-    // Submit form and wait for success
-    await Promise.all([
-      page.waitForResponse(
-        (response) =>
-          response.url().includes("/api/auth/register") &&
-          (response.status() === 200 || response.status() === 201),
-      ),
-      page.click('button[type="submit"]'),
-    ]);
+    // Submit the form and wait for navigation or API response
+    // First, set up response promise to wait for the API
+    const responsePromise = page.waitForResponse(
+      (response) => response.url().includes("/api/auth/register"),
+      { timeout: 10000 },
+    );
 
-    // Check for success (either redirect or message)
-    const success = await Promise.race([
-      page
-        .waitForURL(/.*\/auth\/signin.*registered=true.*/, { timeout: 5000 })
-        .then(() => true)
-        .catch(() => false),
-      page
-        .waitForSelector('[role="alert"]:has-text("success")', {
-          timeout: 5000,
-        })
-        .then(() => true)
-        .catch(() => false),
-    ]);
+    // Click the submit button
+    await page.click('button[type="submit"]');
 
-    expect(success, "Registration should succeed").toBe(true);
+    // Wait for the API response
+    const response = await responsePromise;
+    const success = response.status() === 201 || response.status() === 200;
+
+    // If API responded successfully, wait for redirect or check for success message
+    if (success) {
+      // Wait for redirection or success message with a generous timeout
+      await page.waitForTimeout(2000);
+
+      // Check for either:
+      // 1. We're on the sign-in page with a registered=true parameter
+      // 2. Or we see a success message
+      const currentUrl = page.url();
+      const successUrl =
+        currentUrl.includes("/auth/signin") &&
+        currentUrl.includes("registered=true");
+
+      const successMessage = await page
+        .locator('[data-testid="registration-success"]')
+        .isVisible()
+        .catch(() => false);
+
+      expect(
+        success && (successUrl || successMessage),
+        "Registration should succeed and redirect to login",
+      ).toBe(true);
+    } else {
+      // If API response was not successful, the test should fail
+      expect
+        .soft(success, `Registration failed with status ${response.status()}`)
+        .toBe(true);
+
+      // Additional debug info about the response
+      try {
+        const responseText = await response.text();
+        console.log(
+          "Registration API response:",
+          response.status(),
+          responseText,
+        );
+      } catch (e) {
+        console.log("Could not get response text: ", e);
+      }
+    }
   });
 
   // Test: Password mismatch with different validation scenarios
