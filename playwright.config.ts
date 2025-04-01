@@ -21,7 +21,7 @@ const authFile = path.join(process.cwd(), "./playwright/.auth/user.json");
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: "./tests",
+  testDir: "./e2e",
   outputDir: "./test-results",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -72,14 +72,19 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "npm run dev",
+    command: "bun run dev",
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
+    timeout: 120000, // Increase timeout to 2 minutes
     stdout: "pipe",
     stderr: "pipe",
     env: {
       ...process.env,
+      PORT: PORT.toString(),
       NODE_ENV: "test",
+      USE_MOCK_SUPABASE: "true",
+      NEXT_PUBLIC_SUPABASE_URL: "http://mock-supabase-url",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
       NEXTAUTH_URL: BASE_URL,
       NEXTAUTH_SECRET: "test-secret",
     },

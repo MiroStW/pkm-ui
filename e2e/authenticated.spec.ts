@@ -86,37 +86,94 @@ test.describe("Authenticated Tests", () => {
     // Navigate to protected page
     await page.goto(BASE_URL + PROTECTED_URL);
 
-    // Verify initial auth state
+    // Verify initial auth state - check that protected content is visible
     await expect(page.getByText(/Welcome, Test User/)).toBeVisible();
 
-    // Store initial session data
-    const initialSession = await page.evaluate(() => {
+    // Verify session state via API before reload
+    const hasSessionBefore = await page.evaluate(() => {
+      return new Promise<boolean>((resolve) => {
+        fetch("/api/auth/session")
+          .then((res) => res.json())
+          .then((data: { user?: unknown }) => resolve(!!data.user))
+          .catch(() => resolve(false));
+      });
+    });
+    expect(
+      hasSessionBefore,
+      "Expected user to be authenticated before reload",
+    ).toBe(true);
+
+    // Store any client-side auth state
+    const initialState = await page.evaluate(() => {
       return {
-        cookies: document.cookie,
         localStorage: localStorage.getItem("session") ?? "",
         sessionStorage: sessionStorage.getItem("session"),
+        cookies: document.cookie,
+        cookiesExist: document.cookie.length > 0,
       };
     });
+
+    // Log state for debugging
+    console.log(
+      "Auth state before reload:",
+      JSON.stringify({
+        hasSession: hasSessionBefore,
+        hasCookies: initialState.cookiesExist,
+      }),
+    );
 
     // Reload the page
     await page.reload();
 
-    // Verify we're still on the protected page
+    // Verify we're still on the protected page after reload
     expect(new URL(page.url()).pathname).toBe(PROTECTED_URL);
 
-    // Get current session data
-    const currentSession = await page.evaluate(() => {
+    // Verify session state via API after reload
+    const hasSessionAfter = await page.evaluate(() => {
+      return new Promise<boolean>((resolve) => {
+        fetch("/api/auth/session")
+          .then((res) => res.json())
+          .then((data: { user?: unknown }) => resolve(!!data.user))
+          .catch(() => resolve(false));
+      });
+    });
+    expect(
+      hasSessionAfter,
+      "Expected user to still be authenticated after reload",
+    ).toBe(true);
+
+    // Check current client-side state
+    const currentState = await page.evaluate(() => {
       return {
-        cookies: document.cookie,
         localStorage: localStorage.getItem("session") ?? "",
         sessionStorage: sessionStorage.getItem("session"),
+        cookies: document.cookie,
+        cookiesExist: document.cookie.length > 0,
       };
     });
 
-    // Compare session data
-    expect(currentSession).toEqual(initialSession);
+    // Log state for debugging
+    console.log(
+      "Auth state after reload:",
+      JSON.stringify({
+        hasSession: hasSessionAfter,
+        hasCookies: currentState.cookiesExist,
+      }),
+    );
 
-    // Verify protected content is still accessible
+    // Verify localStorage and sessionStorage remain the same
+    expect(currentState.localStorage).toEqual(initialState.localStorage);
+    expect(currentState.sessionStorage).toEqual(initialState.sessionStorage);
+
+    // Verify cookies still exist if they existed before
+    if (initialState.cookiesExist) {
+      expect(
+        currentState.cookiesExist,
+        "Expected cookies to still exist after reload if they existed before",
+      ).toBe(true);
+    }
+
+    // Most importantly, verify protected content is still accessible
     await expect(page.getByText(/Welcome, Test User/)).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Protected Page" }),

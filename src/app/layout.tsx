@@ -1,9 +1,9 @@
-import "~/styles/globals.css";
+import "@/styles/globals.css";
 
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
-import { auth } from "~/server/auth";
+import { auth } from "@/server/auth";
 
 export const metadata: Metadata = {
   title: "Create T3 App",

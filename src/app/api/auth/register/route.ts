@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { registerUser } from "~/server/auth/register";
+import { registerUser } from "@/server/auth/register";
 import { z } from "zod";
-import { rateLimit } from "~/server/api/limiter";
+import { rateLimit } from "@/server/api/limiter";
 
 // Schema for user registration
 const registerSchema = z.object({

@@ -1,104 +1,78 @@
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./types";
 
 // Get Supabase URL and service role key from env vars
-const supabaseUrl = process.env.SUPABASE_URL ?? "";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "";
+const supabaseKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  process.env.SUPABASE_SERVICE_ROLE_KEY ??
+  "";
 
-// Check for missing env vars
-if (!supabaseUrl) throw new Error("Missing SUPABASE_URL");
-if (!supabaseKey) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+// Force test mode if environment variable is set or if we're running in a test environment
+const isTestMode =
+  process.env.USE_MOCK_SUPABASE === "true" || process.env.NODE_ENV === "test";
 
-// Check if we're in test mode
-const isTestMode = process.env.USE_MOCK_SUPABASE === "true";
+// Log for debugging
+console.log("isTestMode", isTestMode);
+
+// Simple in-memory mock storage
+const mockStorage: Record<string, Record<string, any>> = {
+  chat_sessions: {},
+  chat_messages: {},
+};
+
+// Create a simple mock Supabase client
+function createMockClient() {
+  return {
+    from: (table: string) => {
+      return {
+        select: () => ({
+          single: () => ({ data: null, error: null }),
+          eq: () => ({
+            single: () => ({ data: null, error: null }),
+            order: () => ({ data: [], error: null }),
+          }),
+        }),
+        insert: (data: Record<string, unknown>) => ({
+          select: () => ({
+            single: () => {
+              // Special case for user registration - return mock user data for test
+              if (table === "users" && typeof data.email === "string") {
+                return {
+                  data: { id: "test-user-id-" + Date.now() },
+                  error: null,
+                };
+              }
+              return { data: null, error: null };
+            },
+          }),
+        }),
+        update: () => ({
+          eq: () => ({
+            eq: () => ({
+              select: () => ({
+                single: () => ({ data: null, error: null }),
+              }),
+            }),
+          }),
+        }),
+        delete: () => ({
+          eq: () => ({
+            eq: () => ({ data: null, error: null }),
+          }),
+        }),
+      };
+    },
+  };
+}
 
 // Create a mock Supabase client for tests or use the real one for production
 export const supabase = isTestMode
-  ? createMockSupabaseClient()
+  ? createMockClient()
   : createClient(supabaseUrl, supabaseKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
       },
     });
-
-/**
- * Creates a mock Supabase client for testing purposes
- */
-function createMockSupabaseClient() {
-  // Mock test user for authentication
-  const TEST_USER = {
-    id: "test-user-id",
-    email: "test@example.com",
-    password_hash: "password_hash_value", // The actual hash isn't important for tests
-    name: "Test User",
-  };
-
-  console.log("Using mock Supabase client for testing");
-
-  // Return a mock implementation of the Supabase client
-  return {
-    from: (table: string) => {
-      return {
-        select: (columns?: string) => {
-          console.log(`Mock Supabase: SELECT from ${table}`);
-          return {
-            eq: (column: string, value: string) => {
-              console.log(`Mock Supabase: WHERE ${column} = ${value}`);
-              return {
-                single: () => {
-                  // For authentication testing - always return success for test user
-                  if (
-                    table === "users" &&
-                    column === "email" &&
-                    value === TEST_USER.email
-                  ) {
-                    console.log(
-                      `Mock Supabase: Found test user ${TEST_USER.email}`,
-                    );
-                    return {
-                      data: TEST_USER,
-                      error: null,
-                    };
-                  }
-
-                  // Default user not found
-                  console.log(`Mock Supabase: User not found for ${value}`);
-                  return {
-                    data: null,
-                    error: { message: "User not found" },
-                  };
-                },
-              };
-            },
-          };
-        },
-        insert: (data: Record<string, string | undefined>) => {
-          console.log(`Mock Supabase: INSERT into ${table}`, data);
-          return {
-            select: (columns?: string) => {
-              return {
-                single: <T>() => {
-                  // For registration testing - always succeed
-                  if (table === "users" && data.email) {
-                    console.log(
-                      `Mock Supabase: User registered: ${data.email}`,
-                    );
-                    return {
-                      data: { id: "new-user-id", ...data } as unknown as T,
-                      error: null,
-                    };
-                  }
-
-                  return {
-                    data: null,
-                    error: { message: "Failed to insert data" },
-                  };
-                },
-              };
-            },
-          };
-        },
-      };
-    },
-  };
-}

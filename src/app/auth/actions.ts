@@ -1,7 +1,7 @@
 "use server";
 
 import { AuthError } from "next-auth";
-import { signIn } from "~/server/auth"; // Use the server-side signIn
+import { signIn } from "@/server/auth"; // Use the server-side signIn
 import { redirect } from "next/navigation";
 
 // Type guard for Error objects with a cause
