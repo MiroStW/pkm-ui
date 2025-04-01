@@ -4,7 +4,7 @@ title: Pkm Chatbot
 desc: >-
   Architecture decisions for personal knowledge management chatbot
   implementation
-updated: 1742985176009
+updated: 1743512012569
 created: "2024-06-24T00:00:00.000Z"
 ---
 
@@ -38,7 +38,7 @@ After evaluating multiple options, I've decided on a **Hybrid Local/Cloud Archit
    - Simple chat interface accessible from any device
    - Connects to Pinecone for relevant document retrieval
    - Integrates with an LLM API (Claude or GPT-4) for processing queries
-   - Uses Vercel KV for chat history and session storage
+   - Uses Supabase PostgreSQL for user authentication and chat history storage
    - Includes authentication to ensure only I can access the system
 
 4. **Synchronization Mechanism**
@@ -63,7 +63,7 @@ After evaluating multiple options, I've decided on a **Hybrid Local/Cloud Archit
    - Select and integrate embedding model
    - Create efficient updating mechanism
 
-   [[embedding-pipeline]]
+   [[tech.projects.pkm-chatbot.embedding-pipeline]]
 
 2. **Cloud Infrastructure Setup**
 
@@ -72,12 +72,16 @@ After evaluating multiple options, I've decided on a **Hybrid Local/Cloud Archit
    - Implement secure authentication
    - Connect services together
 
+   [[tech.projects.pkm-chatbot.cloud-infrastructure]]
+
 3. **Web Interface Development**
 
    - Create responsive chat UI with Shadcn/ui
    - Implement context handling for conversations
    - Add search refinement capabilities
    - Utilize Vercel AI SDK for streaming responses
+
+   [[tech.projects.pkm-chatbot.web-interface]]
 
 ## Sample Query Flow
 
@@ -87,4 +91,4 @@ After evaluating multiple options, I've decided on a **Hybrid Local/Cloud Archit
 4. LLM generates a response based on the retrieved context
 5. Response streams to the user interface via Vercel AI SDK
 6. User receives an answer with references to specific notes
-7. Conversation history is saved to Vercel KV for future reference
+7. Conversation history is saved to Supabase PostgreSQL for future reference

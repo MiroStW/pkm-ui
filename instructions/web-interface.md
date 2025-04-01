@@ -4,8 +4,8 @@ title: Web Interface
 desc: >-
   Web interface design and technology decisions for personal knowledge
   management chatbot
-updated: 1742987512000
-created: '2024-06-23T17:25:12.000Z'
+updated: 1743512001754
+created: "2024-06-23T17:25:12.000Z"
 ---
 
 # PKM Chatbot: Web Interface
@@ -94,7 +94,7 @@ We've chosen **Vercel AI SDK** for the implementation.
 
 ## Chat Storage
 
-### Decision: Vercel KV
+### Decision: Supabase PostgreSQL
 
 After evaluating multiple chat storage options:
 
@@ -102,25 +102,26 @@ After evaluating multiple chat storage options:
 - Serverless database options
 - Vector DB extension
 
-We've chosen **Vercel KV** for the implementation.
+We've chosen **Supabase PostgreSQL** for the implementation.
 
 ### Rationale
 
-- **Vercel integration**: Native integration with our chosen hosting platform
+- **Consolidated infrastructure**: Uses the same database as our authentication system
+- **Relational capabilities**: Can model conversations with users and messages in a structured way
 - **Cross-device access**: Conversations available from any device
 - **Persistent storage**: Data remains available long-term
-- **Performance**: Low-latency KV store designed for serverless applications
-- **Simplicity**: Reduces external dependencies and complexity
+- **Real-time capabilities**: Potential for real-time updates using Supabase's real-time features
+- **Simplicity**: Reduces external dependencies by using one database service for multiple needs
 
 ### Implementation Details
 
-- **Storage pattern**: Key-value storage for chat sessions and histories
-- **Data structure**: JSON-serialized conversation threads
-- **Access pattern**: Server-side access via Vercel KV client
+- **Storage pattern**: Relational tables for users, chat sessions, and messages
+- **Data structure**: Normalized database design with appropriate relationships
+- **Access pattern**: Server-side access via Supabase client
 
 ## Architecture Details
 
-- **Authentication**: NextAuth.js with simple credential provider
+- **Authentication**: NextAuth.js with Supabase credential provider
 - **State Management**: React Context with SWR for data fetching
 - **Data Flow**: Client → API Routes → Vector DB → LLM → Streaming Response
 - **Search Refinement**: Implement filters using Pinecone metadata filtering capabilities

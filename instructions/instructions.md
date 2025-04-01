@@ -1,9 +1,8 @@
 ---
 id: i7z29rfmh83jsg5p01lxw6c
-title: Implementation Plan
-desc: >-
-  Step-by-step implementation plan for the PKM Chatbot web interface
-updated: 1743028800000
+title: Web Interface Implementation Plan
+desc: Step-by-step implementation plan for the PKM Chatbot web interface
+updated: 1743512022703
 created: "2024-06-23T19:00:00.000Z"
 ---
 
@@ -22,17 +21,18 @@ This document outlines a step-by-step implementation plan for building the PKM C
 
 ### Step 2: Configure Authentication
 
-- Implement NextAuth.js with credential provider
+- Implement NextAuth.js with Supabase credential provider
 - Create login/authentication pages
 - Set up session management
 - **Checkpoint**: Users can sign in with credentials and access protected routes, and are redirected to login when accessing protected routes without authentication.
 
-### Step 3: Set Up Vercel KV
+### Step 3: Set Up Supabase for Data Storage
 
-- Configure Vercel KV for chat history storage
-- Create utility functions for interacting with KV store
+- Configure Supabase PostgreSQL for user and chat storage
+- Create database schema for users, chat sessions, and messages
+- Implement utility functions for interacting with Supabase
 - Implement basic CRUD operations for chat sessions
-- **Checkpoint**: Test commands can write to and read from Vercel KV successfully.
+- **Checkpoint**: Test commands can write to and read from Supabase PostgreSQL successfully.
 
 ### Step 4: Install Vercel AI SDK
 
@@ -101,7 +101,7 @@ This document outlines a step-by-step implementation plan for building the PKM C
 
 ### Step 12: Implement Cross-Device Synchronization
 
-- Enhance chat history persistence with user identification
+- Leverage Supabase relational model for chat history with user associations
 - Implement settings synchronization
 - Create functionality to continue conversations across devices
 - **Checkpoint**: Chat history is accessible across multiple devices and browsers for the same authenticated user.
