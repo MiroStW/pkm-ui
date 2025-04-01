@@ -1,26 +1,42 @@
-import { auth } from "~/server/auth";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default auth((req) => {
-  // req.auth
-  const isLoggedIn = !!req.auth;
-  const { nextUrl } = req;
+export async function middleware(request: NextRequest) {
+  // Get the token from the request with secure cookie configuration
+  const token = await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET,
+    secureCookie: process.env.NODE_ENV === "production",
+    cookieName: "next-auth.session-token",
+  });
 
-  // Redirect to signin if trying to access protected route and not logged in
-  if (nextUrl.pathname.startsWith("/protected") && !isLoggedIn) {
-    // Construct the sign-in URL with a callback URL
-    const signInUrl = new URL("/api/auth/signin", nextUrl.origin);
+  // Check if the user is authenticated
+  const isAuthenticated = !!token;
+  const { nextUrl } = request;
+  const isAuthPage = nextUrl.pathname.startsWith("/auth/signin");
+  const isProtectedRoute = nextUrl.pathname.startsWith("/protected");
+
+  // Redirect unauthenticated users from protected routes to sign in
+  if (isProtectedRoute && !isAuthenticated) {
+    const signInUrl = new URL("/auth/signin", nextUrl.origin);
     signInUrl.searchParams.set("callbackUrl", nextUrl.pathname);
-    return Response.redirect(signInUrl);
+    return NextResponse.redirect(signInUrl);
   }
 
-  // If logged in and trying to access signin page, redirect to home
-  if (isLoggedIn && nextUrl.pathname.startsWith("/auth/signin")) {
-    return Response.redirect(new URL("/", nextUrl.origin));
+  // If user is already authenticated and tries to access auth pages,
+  // redirect to the callbackUrl if it exists, otherwise to the home page
+  if (isAuthenticated && isAuthPage) {
+    const callbackUrl = nextUrl.searchParams.get("callbackUrl");
+    if (callbackUrl && callbackUrl !== "/auth/signin") {
+      return NextResponse.redirect(new URL(callbackUrl, nextUrl.origin));
+    }
+    return NextResponse.redirect(new URL("/", nextUrl.origin));
   }
 
-  // Allow request to proceed
-  return undefined;
-});
+  // For all other routes, proceed as normal
+  return NextResponse.next();
+}
 
 // Optionally, don't invoke Middleware on some paths
 // Read more: https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
