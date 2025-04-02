@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 // Define constants for URLs and credentials
-const BASE_URL = "http://localhost:3001";
+const BASE_URL = "http://localhost:3000";
 const REGISTER_URL = `${BASE_URL}/auth/register`;
 
 // Test user info

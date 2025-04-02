@@ -5,7 +5,7 @@
  */
 
 /// <reference types="bun-types" />
-import { expect, afterEach, type ExpectExtendMatchers } from "bun:test";
+import { expect, afterEach, type ExpectExtendMatchers, mock } from "bun:test";
 import * as matchers from "@testing-library/jest-dom/matchers";
 import { cleanup } from "@testing-library/react";
 
@@ -15,6 +15,7 @@ expect.extend(matchers as unknown as ExpectExtendMatchers<unknown>);
 // Cleanup after each test
 afterEach(() => {
   cleanup();
+  mock.restore();
 });
 
 // Force test mode for all tests

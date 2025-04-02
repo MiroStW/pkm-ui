@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const BASE_URL = "http://localhost:3001";
+const BASE_URL = "http://localhost:3000";
 const SIGNIN_URL = `${BASE_URL}/auth/signin`;
 const REGISTER_URL = `${BASE_URL}/auth/register`;
 const PROTECTED_URL = `${BASE_URL}/protected`;

@@ -13,9 +13,6 @@ const supabaseKey =
 const isTestMode =
   process.env.USE_MOCK_SUPABASE === "true" || process.env.NODE_ENV === "test";
 
-// Log for debugging
-console.log("isTestMode", isTestMode);
-
 // Type definitions to help with mocking
 interface MockSelectResponse<T> {
   data: T | null;

@@ -193,5 +193,5 @@ export const authConfig: NextAuthConfig = {
   },
 
   // Debugging in development
-  debug: process.env.NODE_ENV === "development",
+  debug: process.env.NODE_ENV !== "production",
 };

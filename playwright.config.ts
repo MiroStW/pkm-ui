@@ -5,9 +5,8 @@ import { setupTestEnv } from "./tests/setup/mockSupabase";
 // Setup test environment when playwright config is loaded
 setupTestEnv();
 
-const PORT = process.env.PORT ?? 3001;
+const PORT = process.env.PORT ?? 3000;
 const BASE_URL = `http://localhost:${PORT}`;
-
 // Configuration for test authentication
 const authFile = path.join(process.cwd(), "./playwright/.auth/user.json");
 

@@ -9,7 +9,7 @@ const TEST_PASSWORD = "StrongP@ssw0rd123";
 const TEST_NAME = "Test User";
 
 // Base URL for tests
-const BASE_URL = "http://localhost:3001";
+const BASE_URL = "http://localhost:3000";
 
 // Path to store authentication state
 const authFile = path.join(process.cwd(), "./playwright/.auth/user.json");

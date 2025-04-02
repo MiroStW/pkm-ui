@@ -1,2 +1,6 @@
 [test.environment]
 NODE_ENV = "test"
+
+[test]
+preload = ["./tests/happydom.ts", "./tests/setup.ts"]
+coverage = true

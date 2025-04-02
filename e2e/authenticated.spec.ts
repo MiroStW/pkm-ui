@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import path from "path";
 
 // Define constants for URLs and credentials
-const BASE_URL = "http://localhost:3001";
+const BASE_URL = "http://localhost:3000";
 const PROTECTED_URL = "/protected";
 const SIGNIN_URL = "/auth/signin";
 const SCREENSHOTS_DIR = path.join("tests", "screenshots");
@@ -25,17 +25,15 @@ test.describe("Authenticated Tests", () => {
     // Should NOT be redirected to login - check exact URL
     expect(new URL(page.url()).pathname).toBe(PROTECTED_URL);
 
-    // Verify specific content matches expected data
-    const welcomeText = await page
-      .getByText(/Welcome, Test User/)
+    // Verify specific content matches expected data - look for Dashboard heading instead of Welcome message
+    const dashboardHeading = await page
+      .getByRole("heading", { name: "Dashboard" })
       .textContent();
-    expect(welcomeText).toBe("Welcome, Test User!");
+    expect(dashboardHeading).toBe("Dashboard");
 
     // Verify all protected elements are present and accessible
-    const protectedHeading = page.getByRole("heading", {
-      name: "Protected Page",
-    });
-    await expect(protectedHeading).toBeVisible();
+    const cardTitle = page.getByText("Recent Chats");
+    await expect(cardTitle).toBeVisible();
 
     // Verify session state is valid
     const hasValidSession = await page.evaluate(() => {
@@ -57,8 +55,13 @@ test.describe("Authenticated Tests", () => {
     // Make sure we're on the protected page
     expect(new URL(page.url()).pathname).toBe(PROTECTED_URL);
 
-    // Use a specific data-testid for logout button to avoid ambiguity
-    const logoutButton = page.getByRole("button", { name: /sign out/i });
+    // First click the avatar to open the dropdown menu
+    const avatarButton = page.locator("button.rounded-full");
+    await expect(avatarButton).toBeVisible();
+    await avatarButton.click();
+
+    // Now find and click the log out option in the dropdown
+    const logoutButton = page.getByText("Log out");
 
     // Verify button is visible and enabled before clicking
     await expect(logoutButton).toBeVisible();
@@ -87,7 +90,9 @@ test.describe("Authenticated Tests", () => {
     await page.goto(BASE_URL + PROTECTED_URL);
 
     // Verify initial auth state - check that protected content is visible
-    await expect(page.getByText(/Welcome, Test User/)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Dashboard" }),
+    ).toBeVisible();
 
     // Verify session state via API before reload
     const hasSessionBefore = await page.evaluate(() => {
@@ -174,10 +179,10 @@ test.describe("Authenticated Tests", () => {
     }
 
     // Most importantly, verify protected content is still accessible
-    await expect(page.getByText(/Welcome, Test User/)).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Protected Page" }),
+      page.getByRole("heading", { name: "Dashboard" }),
     ).toBeVisible();
+    await expect(page.getByText("Recent Chats")).toBeVisible();
   });
 
   // Test: Session timeout handling - simplified approach

@@ -1,11 +1,18 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Container } from "@/components/ui/container";
 
 export default function ProtectedPage() {
-  const { data: session, status } = useSession({
+  const { status } = useSession({
     required: true,
     onUnauthenticated() {
       // This will never actually be called because of our middleware,
@@ -19,34 +26,43 @@ export default function ProtectedPage() {
     return <div>Loading...</div>;
   }
 
-  // Handler for sign out with proper redirection
-  const handleSignOut = async () => {
-    await signOut({
-      callbackUrl: "/",
-      redirect: true,
-    });
-  };
-
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="mb-4 text-2xl font-bold">Protected Page</h1>
-      {session?.user ? (
-        <div data-testid="protected-content">
-          <p className="mb-2">Welcome, {session.user.name}!</p>
-          <div className="user-email mb-4">
-            Your email is: {session.user.email}
-          </div>
-          <button
-            className="rounded bg-red-500 px-4 py-2 text-white"
-            onClick={handleSignOut}
-            data-testid="signout-button"
-          >
-            Sign out
-          </button>
-        </div>
-      ) : (
-        <p>You are not authorized to view this content.</p>
-      )}
-    </div>
+    <Container className="py-6">
+      <h1 className="mb-6 text-3xl font-bold">Dashboard</h1>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Chats</CardTitle>
+            <CardDescription>Your recent conversations</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>No recent conversations found.</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Knowledge Base</CardTitle>
+            <CardDescription>Your personal knowledge base</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>No knowledge base entries found.</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Common actions</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p>Start a new chat</p>
+            <p>Manage your knowledge base</p>
+            <p>Update your preferences</p>
+          </CardContent>
+        </Card>
+      </div>
+    </Container>
   );
 }

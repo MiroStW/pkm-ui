@@ -2,7 +2,7 @@
   "cookies": [
     {
       "name": "authjs.callback-url",
-      "value": "http%3A%2F%2Flocalhost%3A3001%2Fauth%2Fsignin",
+      "value": "http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fsignin",
       "domain": "localhost",
       "path": "/",
       "expires": -1,
