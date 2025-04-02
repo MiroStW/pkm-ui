@@ -1,4 +1,0 @@
-# Ignore theme toggle component due to next-themes typing issues
-# This will be properly addressed in Step 15 of the implementation plan
-# TODO: check on next major update if this is still needed
-src/components/ThemeToggle.tsx

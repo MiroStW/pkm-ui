@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 
-export default function ProtectedPage() {
+export default function DashboardPage() {
   const { status } = useSession({
     required: true,
     onUnauthenticated() {

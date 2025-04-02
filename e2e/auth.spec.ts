@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 const BASE_URL = "http://localhost:3000";
 const SIGNIN_URL = `${BASE_URL}/auth/signin`;
 const REGISTER_URL = `${BASE_URL}/auth/register`;
-const PROTECTED_URL = `${BASE_URL}/protected`;
+const PROTECTED_URL = `${BASE_URL}/dashboard`;
 
 // Test credentials
 const TEST_EMAIL = "test@example.com";
@@ -313,7 +313,7 @@ test.describe("Authentication - Unauthenticated", () => {
 
     // Verify the callback URL is set correctly to redirect back after login
     // Next.js only includes the path in the callbackUrl parameter, not the full URL
-    expect(currentUrl.searchParams.get("callbackUrl")).toBe("/protected");
+    expect(currentUrl.searchParams.get("callbackUrl")).toBe("/dashboard");
 
     // Verify the login form is visible
     await expect(page.locator('[data-testid="email-input"]')).toBeVisible();

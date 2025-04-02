@@ -15,7 +15,7 @@ interface SidebarNavItemProps {
 
 export function SidebarNavItem({ href, title, icon }: SidebarNavItemProps) {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <Link href={href} passHref>
@@ -38,17 +38,17 @@ export function Sidebar() {
     <div className="flex h-full flex-col border-r p-4">
       <div className="space-y-2">
         <SidebarNavItem
-          href="/protected"
-          title="Home"
+          href="/dashboard"
+          title="Dashboard"
           icon={<Home size={18} />}
         />
         <SidebarNavItem
-          href="/protected/chat"
+          href="/chat"
           title="Chat"
           icon={<MessageSquare size={18} />}
         />
         <SidebarNavItem
-          href="/protected/settings"
+          href="/settings"
           title="Settings"
           icon={<Settings size={18} />}
         />

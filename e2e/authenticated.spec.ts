@@ -3,7 +3,7 @@ import path from "path";
 
 // Define constants for URLs and credentials
 const BASE_URL = "http://localhost:3000";
-const PROTECTED_URL = "/protected";
+const DASHBOARD_URL = "/dashboard";
 const SIGNIN_URL = "/auth/signin";
 const SCREENSHOTS_DIR = path.join("tests", "screenshots");
 
@@ -13,17 +13,17 @@ test.describe("Authenticated Tests", () => {
   test.use({ storageState: "playwright/.auth/user.json" });
 
   // Test: Can access protected page when authenticated
-  test("can access protected page when authenticated", async ({ page }) => {
+  test("can access dashboard page when authenticated", async ({ page }) => {
     // Navigate to a protected page
-    await page.goto(BASE_URL + PROTECTED_URL);
+    await page.goto(BASE_URL + DASHBOARD_URL);
 
     // Take a screenshot for debugging
     await page.screenshot({
-      path: path.join(SCREENSHOTS_DIR, "protected-page-test.png"),
+      path: path.join(SCREENSHOTS_DIR, "dashboard-page-test.png"),
     });
 
     // Should NOT be redirected to login - check exact URL
-    expect(new URL(page.url()).pathname).toBe(PROTECTED_URL);
+    expect(new URL(page.url()).pathname).toBe(DASHBOARD_URL);
 
     // Verify specific content matches expected data - look for Dashboard heading instead of Welcome message
     const dashboardHeading = await page
@@ -50,10 +50,10 @@ test.describe("Authenticated Tests", () => {
   // Test: Can sign out successfully
   test("can sign out successfully", async ({ page }) => {
     // Navigate to protected page
-    await page.goto(BASE_URL + PROTECTED_URL);
+    await page.goto(BASE_URL + DASHBOARD_URL);
 
     // Make sure we're on the protected page
-    expect(new URL(page.url()).pathname).toBe(PROTECTED_URL);
+    expect(new URL(page.url()).pathname).toBe(DASHBOARD_URL);
 
     // First click the avatar to open the dropdown menu
     const avatarButton = page.locator("button.rounded-full");
@@ -77,17 +77,17 @@ test.describe("Authenticated Tests", () => {
 
     // Should be redirected - just check we're no longer on the protected page
     const currentUrl = new URL(page.url());
-    expect(currentUrl.pathname).not.toBe(PROTECTED_URL);
+    expect(currentUrl.pathname).not.toBe(DASHBOARD_URL);
 
     // Verify we can't access protected content anymore
-    await page.goto(BASE_URL + PROTECTED_URL);
+    await page.goto(BASE_URL + DASHBOARD_URL);
     expect(new URL(page.url()).pathname).toBe(SIGNIN_URL);
   });
 
   // Test: Session persistence after page reload
   test("maintains session after page reload", async ({ page }) => {
     // Navigate to protected page
-    await page.goto(BASE_URL + PROTECTED_URL);
+    await page.goto(BASE_URL + DASHBOARD_URL);
 
     // Verify initial auth state - check that protected content is visible
     await expect(
@@ -131,7 +131,7 @@ test.describe("Authenticated Tests", () => {
     await page.reload();
 
     // Verify we're still on the protected page after reload
-    expect(new URL(page.url()).pathname).toBe(PROTECTED_URL);
+    expect(new URL(page.url()).pathname).toBe(DASHBOARD_URL);
 
     // Verify session state via API after reload
     const hasSessionAfter = await page.evaluate(() => {
@@ -193,7 +193,7 @@ test.describe("Authenticated Tests", () => {
     await context.clearCookies();
 
     // Navigate directly to the sign-in page with the SessionExpired parameter
-    const signInUrl = `${BASE_URL}${SIGNIN_URL}?error=SessionExpired&callbackUrl=%2Fprotected`;
+    const signInUrl = `${BASE_URL}${SIGNIN_URL}?error=SessionExpired&callbackUrl=%2Fdashboard`;
     console.log("Navigating directly to:", signInUrl);
     await page.goto(signInUrl);
 

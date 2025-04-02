@@ -6,18 +6,18 @@ test.describe("Protected Routes", () => {
   test.use({ storageState: "./playwright/.auth/user.json" });
 
   test("should navigate between protected routes", async ({ page }) => {
-    // Start at the protected page
-    await page.goto("/protected");
-    await expect(page).toHaveURL("/protected");
+    // Start at the dashboard page
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL("/dashboard");
 
     // Check that we're logged in
     await expect(
-      page.getByRole("heading", { name: "Protected Page" }),
+      page.getByRole("heading", { name: "Dashboard" }),
     ).toBeVisible();
 
     // Navigate to Chat page
     await page.getByRole("link", { name: /chat/i }).click();
-    await expect(page).toHaveURL("/protected/chat");
+    await expect(page).toHaveURL("/chat");
     await expect(page.getByRole("heading", { name: "Chat" })).toBeVisible();
 
     // Check chat interface elements
@@ -29,7 +29,7 @@ test.describe("Protected Routes", () => {
 
     // Navigate to Settings page
     await page.getByRole("link", { name: /settings/i }).click();
-    await expect(page).toHaveURL("/protected/settings");
+    await expect(page).toHaveURL("/settings");
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
 
     // Check settings sections
@@ -43,7 +43,7 @@ test.describe("Protected Routes", () => {
   });
 
   test("should have working theme toggle in header", async ({ page }) => {
-    await page.goto("/protected");
+    await page.goto("/dashboard");
 
     // Find and click the theme toggle button
     const themeToggle = page.getByRole("button", { name: "Toggle theme" });
@@ -72,7 +72,7 @@ test.describe("Protected Routes", () => {
   });
 
   test("should have a responsive layout with sidebar", async ({ page }) => {
-    await page.goto("/protected/chat");
+    await page.goto("/chat");
 
     // On larger screens, the sidebar should be visible
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -86,7 +86,7 @@ test.describe("Protected Routes", () => {
   test("chat interface should have basic input functionality", async ({
     page,
   }) => {
-    await page.goto("/protected/chat");
+    await page.goto("/chat");
 
     // Type a message
     const inputField = page.getByPlaceholder("Type your message...");
