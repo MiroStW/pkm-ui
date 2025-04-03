@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Pinecone } from "@pinecone-database/pinecone";
 import { createEmbedding, calculateSimilarity } from "./embedding";
 import { env } from "../../env";

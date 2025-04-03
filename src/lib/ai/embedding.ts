@@ -70,12 +70,16 @@ export const createEmbedding = async (text: string): Promise<number[]> => {
 
     // Use mock embeddings if:
     // 1. We're in development mode or
-    // 2. The API key is missing/invalid or
-    // 3. The API key is a placeholder
+    // 2. We're in a test environment or
+    // 3. The API key is missing/invalid or
+    // 4. The API key is a placeholder
+    const isTestEnv =
+      process.env.NODE_ENV === "test" || typeof window === "undefined";
     const useMockEmbedding =
       process.env.NODE_ENV === "development" ||
+      isTestEnv ||
       !apiKey ||
-      apiKey.includes("test") ||
+      apiKey.includes("placeholder") ||
       apiKey === "fake-api-key";
 
     if (useMockEmbedding) {
