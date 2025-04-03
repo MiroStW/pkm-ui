@@ -11,7 +11,7 @@ alwaysApply: true
 - We use bun for unit tests and playwright for e2e tests
 
 ## module mocks
-avoid using mock.modules with bun unit tests, instead use 
+avoid using mock.modules with bun unit tests, instead use the following spyOn workaround 
 
 Example:
 

@@ -1,6 +1,7 @@
 import { createDataStreamResponse, streamText } from "ai";
 import type { CoreMessage } from "ai";
-import { createOpenAIProvider, defaultStreamOptions } from "@/lib/ai/provider";
+import { defaultStreamOptions } from "@/lib/ai/provider";
+import { createRagOpenAIProvider } from "@/lib/ai/rag";
 import { getToken } from "next-auth/jwt";
 
 export async function POST(req: Request) {
@@ -34,12 +35,39 @@ export async function POST(req: Request) {
       );
     }
 
+    // Get the user's last message for context retrieval
+    const lastUserMessage = [...messages]
+      .reverse()
+      .find((msg) => msg.role === "user");
+
+    // Extract the content as a string - handle both string and array formats
+    let userQuery = "";
+    if (lastUserMessage) {
+      if (typeof lastUserMessage.content === "string") {
+        userQuery = lastUserMessage.content;
+      } else if (Array.isArray(lastUserMessage.content)) {
+        // For multi-modal messages, extract text parts
+        userQuery = lastUserMessage.content
+          .filter((part) => typeof part === "object" && "text" in part)
+          .map((part) => (part as { text: string }).text)
+          .join(" ");
+      }
+    }
+
+    if (!userQuery) {
+      return new Response("Invalid or empty user message", { status: 400 });
+    }
+
     // Create a streaming response using AI SDK
     return createDataStreamResponse({
       execute: async (dataStream) => {
+        // Initialize RAG with the user's query
+        const { provider, messages: enhancedMessages } =
+          await createRagOpenAIProvider(userQuery, messages);
+
         const result = streamText({
-          model: createOpenAIProvider(),
-          messages,
+          model: provider,
+          messages: enhancedMessages,
           ...defaultStreamOptions,
         });
 
