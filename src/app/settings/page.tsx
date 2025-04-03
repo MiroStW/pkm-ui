@@ -4,8 +4,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Container } from "@/components/ui/container";
+} from "@/components/ui/Card";
+import { Container } from "@/components/ui/Container";
 
 export default function SettingsPage() {
   return (

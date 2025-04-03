@@ -66,6 +66,7 @@ export default defineConfig({
       dependencies: ["setup"],
       testMatch: [
         /authenticated\.spec\.ts/, // Tests requiring user to be signed in
+        /chat\.spec\.ts/, // Chat interface tests
       ],
     },
   ],

@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- after adding or changing code always make sure to run `bun test:unit` and `bun test:e2e` to make sure everything still works
+- When adding new functionality, always add tests for it (unit tests and/or e2e tests)
+- We use bun for unit tests and playwright for e2e tests
