@@ -20,6 +20,9 @@ export const env = createEnv({
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
     SUPABASE_ANON_KEY: z.string().min(1),
     OPENAI_API_KEY: z.string().min(1),
+    PINECONE_API_KEY: z.string().min(1),
+    PINECONE_INDEX: z.string().min(1),
+    PINECONE_ENVIRONMENT: z.string().min(1),
   },
 
   /**
@@ -49,6 +52,9 @@ export const env = createEnv({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    PINECONE_API_KEY: process.env.PINECONE_API_KEY,
+    PINECONE_INDEX: process.env.PINECONE_INDEX,
+    PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

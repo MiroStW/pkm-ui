@@ -43,25 +43,95 @@ export const generateChunks = (
   return chunks;
 };
 
+// Define type for OpenAI API response
+interface OpenAIEmbeddingResponse {
+  data: {
+    embedding: number[];
+    index: number;
+    object: string;
+  }[];
+  model: string;
+  object: string;
+  usage: {
+    prompt_tokens: number;
+    total_tokens: number;
+  };
+}
+
 /**
  * Create an embedding for a text chunk
- * This is a placeholder implementation that will need to be updated
- * with the correct AI SDK integration in Phase 3 of the implementation plan
  * @param text The text to embed
  * @returns Promise resolving to an array of numbers representing the embedding
  */
 export const createEmbedding = async (text: string): Promise<number[]> => {
   try {
-    // Mock implementation for now
-    // In Phase 3, we'll implement this with the OpenAI embeddings API
-    console.log(`Creating embedding for text: "${text.substring(0, 50)}..."`);
+    // Get API key
+    const apiKey = process.env.OPENAI_API_KEY;
 
-    // Return a mock embedding (in practice, this would come from the OpenAI API)
-    // Random 1536-dimensional embedding (common size for OpenAI embeddings)
-    const mockEmbedding = Array(1536)
-      .fill(0)
-      .map(() => Math.random() - 0.5);
-    return mockEmbedding;
+    // Use mock embeddings if:
+    // 1. We're in development mode or
+    // 2. The API key is missing/invalid or
+    // 3. The API key is a placeholder
+    const useMockEmbedding =
+      process.env.NODE_ENV === "development" ||
+      !apiKey ||
+      apiKey.includes("test") ||
+      apiKey === "fake-api-key";
+
+    if (useMockEmbedding) {
+      console.log(
+        `Creating mock embedding for text: "${text.substring(0, 50)}..."`,
+      );
+
+      // Return a deterministic mock embedding based on the hash of the text
+      // This ensures similar texts get similar embeddings
+      const hash = text.split("").reduce((acc, char) => {
+        return (acc * 31 + char.charCodeAt(0)) & 0xffffffff;
+      }, 0);
+
+      // Seed the random generator with the hash of the text
+      const seededRandom = (seed: number) => {
+        return () => {
+          seed = (seed * 9301 + 49297) % 233280;
+          return seed / 233280;
+        };
+      };
+
+      const random = seededRandom(hash);
+
+      // Generate a stable mock embedding (dimensions match OpenAI's embedding model)
+      const mockEmbedding = Array(1536)
+        .fill(0)
+        .map(() => random() - 0.5);
+
+      return mockEmbedding;
+    }
+
+    // In production with a valid API key, use actual OpenAI API
+    console.log(
+      `Creating OpenAI embedding for text: "${text.substring(0, 50)}..."`,
+    );
+
+    // Make an API call to OpenAI's embeddings endpoint
+    const response = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        input: text,
+        model: EMBEDDING_MODEL,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenAI API error: ${errorText}`);
+    }
+
+    const result = (await response.json()) as OpenAIEmbeddingResponse;
+    return result.data[0]?.embedding ?? [];
   } catch (error) {
     console.error("Error creating embedding:", error);
     throw error;

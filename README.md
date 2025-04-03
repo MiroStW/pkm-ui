@@ -27,3 +27,32 @@ You can check out the [create-t3-app GitHub repository](https://github.com/t3-os
 ## How do I deploy this?
 
 Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+
+## Vector Database Integration
+
+The application uses Pinecone as its vector database for semantic search capabilities. To set up Pinecone:
+
+1. Create a Pinecone account at [pinecone.io](https://www.pinecone.io/)
+2. Create a new index with the following settings:
+
+   - Dimensions: 1536 (matches OpenAI's text-embedding-3-small model)
+   - Metric: Cosine
+   - Pod Type: Starter (for development) or an appropriate size for production
+
+3. Get your API key and index name from the Pinecone dashboard
+
+4. add them to .env
+
+5. Test the integration:
+   ```bash
+   bun scripts/test-pinecone.ts
+   ```
+
+The integration includes:
+
+- Vector storage for document embeddings
+- Semantic search using OpenAI embeddings
+- Caching layer for improved performance
+- Utility functions for querying and storing documents
+
+For more details, see the implementation in `src/lib/ai/vectordb.ts`.
