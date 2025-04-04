@@ -5,10 +5,24 @@ import { useChat } from "@ai-sdk/react";
 import { ChatMessage } from "./ChatMessage";
 import { Button } from "@/components/ui/Button";
 import { Loader2, CheckCircle2 } from "lucide-react";
+import {
+  SearchFilters,
+  type SearchFilters as SearchFiltersType,
+} from "./SearchFilters";
 
 export function Chat() {
   const [input, setInput] = useState<string>("");
-  const { messages, status, handleInputChange, handleSubmit } = useChat();
+  const [filters, setFilters] = useState<SearchFiltersType>({
+    dateRange: { startDate: null, endDate: null },
+    categories: [],
+    searchScope: "all",
+  });
+
+  const { messages, status, handleInputChange, handleSubmit } = useChat({
+    body: {
+      filters, // Pass filters as body parameter to the API
+    },
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [previousStatus, setPreviousStatus] = useState(status);
 
@@ -41,6 +55,11 @@ export function Chat() {
   // Determine if we just completed streaming (for the completion indicator)
   const justCompleted =
     status !== "streaming" && previousStatus === "streaming";
+
+  // Handle filter changes
+  const handleFilterChange = (newFilters: SearchFiltersType) => {
+    setFilters(newFilters);
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -114,6 +133,7 @@ export function Chat() {
             className="min-w-0 flex-1 rounded-md border px-3 py-2"
             disabled={isLoading}
           />
+          <SearchFilters filters={filters} onChange={handleFilterChange} />
           <Button type="submit" disabled={isLoading || !input.trim()}>
             {isLoading ? (
               <>

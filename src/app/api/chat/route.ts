@@ -3,6 +3,7 @@ import type { CoreMessage } from "ai";
 import { defaultStreamOptions } from "@/lib/ai/provider";
 import { createRagOpenAIProvider } from "@/lib/ai/rag";
 import { getToken } from "next-auth/jwt";
+import type { SearchFilters } from "@/components/chat/SearchFilters";
 
 export async function POST(req: Request) {
   try {
@@ -17,8 +18,11 @@ export async function POST(req: Request) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    // Extract messages from request body
-    const { messages } = (await req.json()) as { messages: CoreMessage[] };
+    // Extract messages and filters from request body
+    const { messages, filters } = (await req.json()) as {
+      messages: CoreMessage[];
+      filters?: SearchFilters;
+    };
 
     // For test environment, return a simple response
     if (process.env.NODE_ENV === "test") {
@@ -69,13 +73,54 @@ export async function POST(req: Request) {
       );
     }
 
+    // Process search filters
+    let searchFilter: Record<string, unknown> | undefined;
+
+    if (filters) {
+      searchFilter = {};
+
+      // Process date range filters
+      if (filters.dateRange.startDate || filters.dateRange.endDate) {
+        if (filters.dateRange.startDate) {
+          searchFilter.date = { $gte: filters.dateRange.startDate };
+        }
+
+        if (filters.dateRange.endDate) {
+          searchFilter.date = {
+            ...(searchFilter.date as Record<string, unknown>),
+            $lte: filters.dateRange.endDate,
+          };
+        }
+      }
+
+      // Process category filters based on search scope
+      if (filters.searchScope === "category" && filters.categories.length > 0) {
+        // If using selected categories
+        searchFilter.category = { $in: filters.categories };
+      } else if (filters.searchScope === "recent") {
+        // For recent documents, set a date filter for last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        searchFilter.date = {
+          ...(searchFilter.date as Record<string, unknown>),
+          $gte: thirtyDaysAgo.toISOString().split("T")[0],
+        };
+      }
+
+      // If no filters were actually set, set searchFilter back to undefined
+      if (Object.keys(searchFilter).length === 0) {
+        searchFilter = undefined;
+      }
+    }
+
     // Create a streaming response using AI SDK
     return createDataStreamResponse({
       execute: async (dataStream) => {
         try {
-          // Initialize RAG with the user's query
+          // Initialize RAG with the user's query and search filters
           const { provider, messages: enhancedMessages } =
-            await createRagOpenAIProvider(userQuery, messages);
+            await createRagOpenAIProvider(userQuery, messages, searchFilter);
 
           const result = streamText({
             model: provider,
