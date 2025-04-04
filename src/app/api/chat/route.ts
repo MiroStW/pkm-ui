@@ -55,24 +55,43 @@ export async function POST(req: Request) {
     }
 
     if (!userQuery) {
-      return new Response("Invalid or empty user message", { status: 400 });
+      return new Response(
+        JSON.stringify({
+          error: "Invalid or empty user message",
+          message: "Please provide a valid question or message.",
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
     }
 
     // Create a streaming response using AI SDK
     return createDataStreamResponse({
       execute: async (dataStream) => {
-        // Initialize RAG with the user's query
-        const { provider, messages: enhancedMessages } =
-          await createRagOpenAIProvider(userQuery, messages);
+        try {
+          // Initialize RAG with the user's query
+          const { provider, messages: enhancedMessages } =
+            await createRagOpenAIProvider(userQuery, messages);
 
-        const result = streamText({
-          model: provider,
-          messages: enhancedMessages,
-          ...defaultStreamOptions,
-        });
+          const result = streamText({
+            model: provider,
+            messages: enhancedMessages,
+            ...defaultStreamOptions,
+          });
 
-        // Merge result stream into data stream
-        result.mergeIntoDataStream(dataStream);
+          // Merge result stream into data stream
+          result.mergeIntoDataStream(dataStream);
+        } catch (error) {
+          console.error("Error during streaming:", error);
+
+          // Just log the error - the stream will naturally terminate
+          // We don't have direct access to write error messages to the stream
+          // with the current AI SDK design
+        }
       },
       headers: {
         // Set proper headers for streaming
@@ -83,8 +102,21 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Error in chat API route:", error);
-    return new Response("An error occurred processing your request", {
-      status: 500,
-    });
+
+    return new Response(
+      JSON.stringify({
+        error: "Server error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "An error occurred processing your request",
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
   }
 }

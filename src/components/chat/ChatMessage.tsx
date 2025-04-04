@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import type { CoreMessage } from "ai";
 import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
+import ReactMarkdown from "react-markdown";
 
 interface ChatMessageProps {
   message: CoreMessage;
@@ -14,6 +15,15 @@ export function ChatMessage({ message }: ChatMessageProps) {
   // Handle different types of content
   const renderContent = () => {
     if (typeof message.content === "string") {
+      // Use ReactMarkdown for assistant messages to properly render markdown
+      if (!isUser) {
+        return (
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown>{message.content}</ReactMarkdown>
+          </div>
+        );
+      }
+      // For user messages, render as plain text
       return message.content;
     }
 
@@ -21,6 +31,17 @@ export function ChatMessage({ message }: ChatMessageProps) {
     if (Array.isArray(message.content)) {
       return message.content.map((part, index) => {
         if ("text" in part) {
+          // For assistant messages, use ReactMarkdown for text parts
+          if (!isUser && typeof part.text === "string") {
+            return (
+              <div
+                key={index}
+                className="prose prose-sm dark:prose-invert max-w-none"
+              >
+                <ReactMarkdown>{part.text}</ReactMarkdown>
+              </div>
+            );
+          }
           return <span key={index}>{part.text}</span>;
         }
         return null;
