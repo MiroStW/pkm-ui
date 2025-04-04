@@ -1,5 +1,5 @@
 import React from "react";
-import { ProtectedLayout } from "@/components/layout/protectedLayout";
+import { ProtectedLayout } from "@/components/layout/ProtectedLayout";
 
 export default function SettingsLayout({
   children,
