@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { CoreMessage } from "ai";
-import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ReactMarkdown from "react-markdown";
 
 interface ChatMessageProps {

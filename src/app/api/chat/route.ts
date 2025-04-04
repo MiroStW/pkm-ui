@@ -3,7 +3,7 @@ import type { CoreMessage } from "ai";
 import { defaultStreamOptions } from "@/lib/ai/provider";
 import { createRagOpenAIProvider } from "@/lib/ai/rag";
 import { getToken } from "next-auth/jwt";
-import type { SearchFilters } from "@/components/chat/SearchFilters";
+import type { SearchFilters } from "@/components/chat/searchFilters";
 
 export async function POST(req: Request) {
   try {

@@ -2,7 +2,7 @@
 
 import { describe, test, expect, spyOn } from "bun:test";
 import * as NextThemes from "next-themes";
-import { ThemeToggle } from "./ThemeToggle";
+import { ThemeToggle } from "./themeToggle";
 import { render } from "@testing-library/react";
 
 describe("ThemeToggle Component", () => {

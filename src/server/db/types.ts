@@ -56,6 +56,38 @@ export interface Database {
           metadata?: Record<string, unknown>;
         };
       };
+      user_settings: {
+        Row: {
+          id: string;
+          user_id: string;
+          sync_chat_history: boolean;
+          sync_settings: boolean;
+          continue_conversations: boolean;
+          created_at: string;
+          updated_at: string;
+          settings_data: Record<string, unknown>;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          sync_chat_history?: boolean;
+          sync_settings?: boolean;
+          continue_conversations?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          settings_data?: Record<string, unknown>;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          sync_chat_history?: boolean;
+          sync_settings?: boolean;
+          continue_conversations?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          settings_data?: Record<string, unknown>;
+        };
+      };
     };
     Views: Record<never, never>;
     Functions: Record<never, never>;

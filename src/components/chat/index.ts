@@ -1,4 +1,4 @@
-export { Chat } from "./Chat";
-export { ChatMessage } from "./ChatMessage";
-export { SearchFilters } from "./SearchFilters";
-export type { SearchFilters as SearchFiltersType } from "./SearchFilters";
+export { Chat } from "./chat";
+export { ChatMessage } from "./chatMessage";
+export { SearchFilters } from "./searchFilters";
+export type { SearchFilters as SearchFiltersType } from "./searchFilters";

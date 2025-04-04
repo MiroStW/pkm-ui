@@ -2,9 +2,9 @@
 
 import { describe, test, expect, beforeEach, spyOn } from "bun:test";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { Header } from "./Header";
+import { Header } from "./header";
 import * as NextAuth from "next-auth/react";
-import * as ThemeToggleModule from "@/components/ThemeToggle";
+import * as ThemeToggleModule from "@/components/themeToggle";
 
 describe("Header Component", () => {
   beforeEach(() => {

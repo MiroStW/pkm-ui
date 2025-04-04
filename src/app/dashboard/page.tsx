@@ -8,8 +8,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/Card";
-import { Container } from "@/components/ui/Container";
+} from "@/components/ui/card";
+import { Container } from "@/components/ui/container";
 
 export default function DashboardPage() {
   const { status } = useSession({

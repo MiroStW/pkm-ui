@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
-import { ChatMessage } from "./ChatMessage";
-import { Button } from "@/components/ui/Button";
+import { ChatMessage } from "./chatMessage";
+import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import {
   SearchFilters,
   type SearchFilters as SearchFiltersType,
-} from "./SearchFilters";
+} from "./searchFilters";
 
 export function Chat() {
   const [input, setInput] = useState<string>("");

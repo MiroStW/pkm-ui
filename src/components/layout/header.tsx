@@ -2,8 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,9 +11,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/DropdownMenu";
+} from "@/components/ui/dropdownMenu";
 import { useSession, signOut } from "next-auth/react";
-import { ThemeToggle } from "../ThemeToggle";
+import { ThemeToggle } from "../themeToggle";
 
 export function Header() {
   const { data: session } = useSession();
