@@ -4,16 +4,18 @@ import { defaultStreamOptions } from "@/lib/ai/provider";
 import { createRagOpenAIProvider } from "@/lib/ai/rag";
 import { getToken } from "next-auth/jwt";
 import type { SearchFilters } from "@/components/chat/SearchFilters";
+import type { NextRequest } from "next/server";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     // Verify authentication
     const token = await getToken({
       req,
       secret: process.env.AUTH_SECRET,
-      secureCookie: process.env.NODE_ENV === "production",
+      cookieName: "next-auth.session-token",
     });
 
+    // skip authentication in test environment
     if (!token && process.env.NODE_ENV !== "test") {
       return new Response("Unauthorized", { status: 401 });
     }
