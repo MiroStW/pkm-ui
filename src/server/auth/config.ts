@@ -2,7 +2,7 @@ import type { DefaultSession, NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
 import { SupabaseAdapter } from "@auth/supabase-adapter";
-import { supabase } from "../db/supabase";
+import { supabaseAdmin } from "../db/supabase";
 import { verifyPassword } from "./password";
 
 /**
@@ -120,12 +120,11 @@ export const authConfig: NextAuthConfig = {
         const parsedCredentials = z
           .object({
             email: z.string().email(),
-            password: z.string().min(6),
+            password: z.string().min(8),
           })
           .safeParse(credentials);
 
         if (!parsedCredentials.success) {
-          console.log("Invalid credentials format");
           return null;
         }
 
@@ -147,14 +146,14 @@ export const authConfig: NextAuthConfig = {
 
         try {
           // Query Supabase for the user
-          const { data, error } = await supabase
+          // Use the admin client to bypass RLS policies
+          const { data, error } = await supabaseAdmin
             .from("users")
             .select("id, email, password_hash, name")
             .eq("email", email)
             .single();
 
           if (error || !data) {
-            console.log("User not found");
             return null;
           }
 
@@ -167,7 +166,6 @@ export const authConfig: NextAuthConfig = {
           );
 
           if (!isPasswordValid) {
-            console.log("Invalid password");
             return null;
           }
 

@@ -1,4 +1,4 @@
-import { supabase } from "../db/supabase";
+import { supabaseAdmin } from "../db/supabase";
 import { hashPassword } from "./password";
 
 interface RegisterData {
@@ -7,6 +7,9 @@ interface RegisterData {
   name?: string;
 }
 
+/**
+ * Interface for the newly created user
+ */
 interface NewUser {
   id: string;
 }
@@ -22,14 +25,14 @@ export async function registerUser(data: RegisterData): Promise<string | null> {
 
   try {
     // First check if a user with this email already exists
-    const { data: existingUser } = await supabase
+    const { data: existingUser } = await supabaseAdmin
       .from("users")
       .select("id")
       .eq("email", email)
       .single();
 
     if (existingUser) {
-      console.log("User with this email already exists");
+      // User already exists with this email
       return null;
     }
 
@@ -37,7 +40,7 @@ export async function registerUser(data: RegisterData): Promise<string | null> {
     const passwordHash = await hashPassword(password);
 
     // Insert the new user into the database
-    const { data: newUser, error: insertError } = await supabase
+    const { data: newUser, error: insertError } = await supabaseAdmin
       .from("users")
       .insert({
         email,

@@ -4,14 +4,15 @@ import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 // Get Supabase URL and service role key from env vars
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "";
-const supabaseKey =
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+const supabaseAnonKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-  process.env.SUPABASE_SERVICE_ROLE_KEY ??
+  process.env.SUPABASE_ANON_KEY ??
   "";
 
-// Force test mode if environment variable is set or if we're running in a test environment
-const isTestMode =
-  process.env.USE_MOCK_SUPABASE === "true" || process.env.NODE_ENV === "test";
+// Only use test mode if explicitly enabled with USE_MOCK_SUPABASE
+// Remove the automatic test mode based on NODE_ENV
+const isTestMode = process.env.USE_MOCK_SUPABASE === "true";
 
 // Type definitions to help with mocking
 interface MockSelectResponse<T> {
@@ -77,10 +78,30 @@ function createMockClient() {
   } as unknown as SupabaseClient;
 }
 
-// Create a mock Supabase client for tests or use the real one for production
+/**
+ * Standard Supabase client with anonymous key.
+ * This client respects RLS policies and should be used for most operations.
+ */
 export const supabase = isTestMode
   ? createMockClient()
-  : createClient(supabaseUrl, supabaseKey, {
+  : createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+/**
+ * Admin Supabase client with service role key.
+ * This client bypasses Row Level Security (RLS) policies.
+ * ONLY use this for:
+ * 1. Authentication operations (login/signup)
+ * 2. Operations that require admin access
+ * 3. When you absolutely need to bypass RLS
+ */
+export const supabaseAdmin = isTestMode
+  ? createMockClient()
+  : createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,

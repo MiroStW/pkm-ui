@@ -10,7 +10,7 @@
       "name": "Debug Next.js",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["dev"],
-      "cwd": "${workspaceFolder}/pkm-ui",
+      "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },
     {
