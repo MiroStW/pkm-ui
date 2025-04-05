@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { Header } from "@/components/layout/header";
-import { Sidebar } from "@/components/layout/sidebar";
-import { MainLayout } from "@/components/layout/mainLayout";
+import { Header } from "@/components/layout/Header";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { MainLayout } from "@/components/layout/MainLayout";
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;

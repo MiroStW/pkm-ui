@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdownMenu";
 import { useSession, signOut } from "next-auth/react";
-import { ThemeToggle } from "../themeToggle";
+import { ThemeToggle } from "../ThemeToggle";
 
 export function Header() {
   const { data: session } = useSession();
