@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Pinecone } from "@pinecone-database/pinecone";
-import { createEmbedding, calculateSimilarity } from "./embedding";
+import { createEmbedding } from "./embedding";
 import { env } from "../../env";
 
 // Store for cached results to improve performance
@@ -102,74 +102,25 @@ export async function queryVectorDB(
     let results: SearchResult[] = [];
 
     // If in development mode with placeholder credentials, use mock implementation
-    if (isDevMode()) {
-      console.log("Using mock Pinecone implementation for development");
 
-      // If mock store is empty, add a couple of example documents
-      if (mockVectorStore.length === 0) {
-        console.log("Initializing mock vector store with sample documents");
+    // In production, use actual Pinecone
+    const index = getPineconeIndex();
 
-        // Add some example documents to the mock store
-        await insertDocument(
-          "mock-doc-1",
-          "This is a sample document about semantic search and vector databases.",
-          { source: "mock-store", category: "example" },
-        );
+    // Query the index
+    const queryResponse = await index.query({
+      vector: queryEmbedding,
+      topK,
+      includeMetadata: true,
+      filter,
+    });
 
-        await insertDocument(
-          "mock-doc-2",
-          "Personal Knowledge Management (PKM) systems help organize information for retrieval.",
-          { source: "mock-store", category: "example" },
-        );
-
-        await insertDocument(
-          "mock-doc-3",
-          "Chatbots can leverage RAG techniques to provide context-aware responses.",
-          { source: "mock-store", category: "example" },
-        );
-      }
-
-      // Compute similarities between query embedding and stored document embeddings
-      const similarities = mockVectorStore
-        .map((doc) => ({
-          id: doc.id,
-          score: calculateSimilarity(queryEmbedding, doc.vector),
-          metadata: doc.metadata,
-          content: doc.metadata.text as string,
-        }))
-        .filter((result) => {
-          // Apply filter if provided
-          if (!filter) return true;
-
-          // Check if all filter conditions match
-          return Object.entries(filter).every(
-            ([key, value]) => result.metadata[key] === value,
-          );
-        })
-        .sort((a, b) => b.score - a.score) // Sort by similarity (highest first)
-        .slice(0, topK); // Take only the top K results
-
-      results = similarities;
-    } else {
-      // In production, use actual Pinecone
-      const index = getPineconeIndex();
-
-      // Query the index
-      const queryResponse = await index.query({
-        vector: queryEmbedding,
-        topK,
-        includeMetadata: true,
-        filter,
-      });
-
-      // Format the results
-      results = queryResponse.matches.map((match) => ({
-        id: match.id,
-        score: match.score ?? 0, // Default to 0 if undefined
-        metadata: match.metadata ?? {},
-        content: match.metadata?.text as string,
-      }));
-    }
+    // Format the results
+    results = queryResponse.matches.map((match) => ({
+      id: match.id,
+      score: match.score ?? 0, // Default to 0 if undefined
+      metadata: match.metadata ?? {},
+      content: match.metadata?.text as string,
+    }));
 
     // Cache the results
     searchCache.push({

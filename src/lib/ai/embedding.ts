@@ -104,7 +104,7 @@ export const createEmbedding = async (text: string): Promise<number[]> => {
       const random = seededRandom(hash);
 
       // Generate a stable mock embedding (dimensions match OpenAI's embedding model)
-      const mockEmbedding = Array(1536)
+      const mockEmbedding = Array(1024)
         .fill(0)
         .map(() => random() - 0.5);
 

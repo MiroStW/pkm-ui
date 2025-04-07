@@ -35,7 +35,7 @@ The application uses Pinecone as its vector database for semantic search capabil
 1. Create a Pinecone account at [pinecone.io](https://www.pinecone.io/)
 2. Create a new index with the following settings:
 
-   - Dimensions: 1536 (matches OpenAI's text-embedding-3-small model)
+   - Dimensions: 1024 (matches OpenAI's text-embedding-ada-002 model)
    - Metric: Cosine
    - Pod Type: Starter (for development) or an appropriate size for production
 

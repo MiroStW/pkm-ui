@@ -54,7 +54,7 @@ describe("embedding", () => {
       const embedding = await createEmbedding(text);
 
       expect(Array.isArray(embedding)).toBe(true);
-      expect(embedding).toHaveLength(1536);
+      expect(embedding).toHaveLength(1024);
 
       // Check that values are numbers and within reasonable range
       embedding.forEach((value) => {
@@ -78,10 +78,10 @@ describe("embedding", () => {
       expect(Array.isArray(embeddings)).toBe(true);
       expect(embeddings).toHaveLength(chunks.length);
 
-      // Each embedding should be a 1536-dimensional vector
+      // Each embedding should be a 1024-dimensional vector
       embeddings.forEach((embedding) => {
         expect(Array.isArray(embedding)).toBe(true);
-        expect(embedding).toHaveLength(1536);
+        expect(embedding).toHaveLength(1024);
       });
     });
   });
